@@ -13,7 +13,7 @@ import org.refactoringminer.api.RefactoringHandler;
 import org.refactoringminer.rm1.GitHistoryRefactoringMinerImpl;
 import org.refactoringminer.util.GitServiceImpl;
 
-public class Main {
+public class Refactorite {
 
     public static void main(String[] args) throws Exception {
 
