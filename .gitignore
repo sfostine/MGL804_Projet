@@ -1,4 +1,5 @@
 src/main/resources/data/repo
+src/main/resources/jar/DesigniteJava.jar
 
 # Created by https://www.toptal.com/developers/gitignore/api/pycharm+all,intellij+all,maven,eclipse
 # Edit at https://www.toptal.com/developers/gitignore?templates=pycharm+all,intellij+all,maven,eclipse
