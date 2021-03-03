@@ -1,0 +1,50 @@
+{
+  "paths": {
+    "data": "../resources/data/",
+    "repo": "../resources/data/repo/",
+    "commit_report": "../resources/data/commit/",
+    "smell_report": "../resources/data/smell/",
+    "refactor_report": "../resources/data/refactor/",
+    "designite_java": "../resources/jar/DesigniteJava.jar"
+  },
+  "replace_existing_repo": false,
+  "filters": {
+    "since": "2001-01-01",
+    "date_format": "%Y-%m-%d",
+    "file_types": [
+      ".java"
+    ]
+  },
+  "repos": [
+    {
+      "remote_repo": "https://github.com/apache/ant",
+      "branch": "master",
+      "name": "ant",
+      "commit_file": "ant_all.csv"
+    },
+    {
+      "remote_repo": "https://github.com/argouml-tigris-org/argouml",
+      "branch": "master",
+      "name": "argouml",
+      "commit_file": "argouml_all.csv"
+    },
+    {
+      "remote_repo": "https://github.com/apache/xerces2-j",
+      "branch": "trunk",
+      "name": "xerces2-j",
+      "commit_file": "xerces2-j_all.csv"
+    }
+  ],
+  "commit_columns": [
+    "hash",
+    "author_date",
+    "is_merge",
+    "nb_files",
+    "files",
+    "methods",
+    "nb_deletions",
+    "nb_insertions ",
+    "modifications"
+  ]
+}
+

@@ -1,0 +1,2 @@
+PyDriller == 1.15.5
+pandas == 1.2.2
