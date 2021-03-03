@@ -2,31 +2,32 @@ import os
 
 import pandas as pd
 
+from src.main.python.detector.DetectorStrategy import DetectorStrategy
 
-class SmellHelper:
-    # java -jar C:\workspace\mgl804\DesigniteJava.jar -i C:\workspace\mgl804\data\repo\ant -o C:\workspace\mgl804\data\smell
-    # https://lankydan.dev/running-a-java-class-as-a-subprocess
-    # https://www.datasciencelearner.com/how-to-call-jar-file-using-python/
+
+class Smell(DetectorStrategy):
 
     def __init__(self, cfg: dict):
-        self.cfg = cfg
+        super(Smell, self).__init__(cfg)
 
-    def run_detector(self, repo_cfg: dict, commit_hash: str):
+    def _execute_jar(self, repo_cfg: dict):
+        print('\n\n*** Run Code Smell Detector ***')
         # init param to execute .jar
-        jar = os.path.abspath(self.cfg['paths']['designite_java'])
+        jar_path = os.path.abspath(self.cfg['paths']['designite_java'])
         repo_path = os.path.abspath(self.cfg['paths']['repo'] + repo_cfg['name'])
-        temp_path = os.path.abspath(self.cfg['paths']['smell_report'] + '/temp')
+        out_path = os.path.abspath(self.cfg['paths']['smell_report'] + '/temp')
 
         # execute .jar
-        os.system("java -jar " + jar + " -i " + repo_path + " -o " + temp_path)
+        os.system("java -jar " + jar_path + " -i " + repo_path + " -o " + out_path)
 
-        # format and save data
-        # merge data in temp folder while adding a columns for the commit hash
+    def _format_data(self, repo_cfg: dict, commit_hash: str):
+        print('\n\n*** Formatting Code Smell Data ***')
+        temp_path = os.path.abspath(self.cfg['paths']['smell_report'] + '/temp')
         out_path = self.cfg['paths']['smell_report'] + repo_cfg['name']
         for file in os.listdir(temp_path):
             if file.endswith(".csv"):
                 temp_file_path = temp_path + '/' + file
-                out_file_path = out_path  + '/' +  file
+                out_file_path = out_path + '/' + file
 
                 new_file = pd.read_csv(temp_file_path, index_col=1)
                 new_file['commit_hash'] = commit_hash

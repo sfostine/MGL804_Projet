@@ -5,7 +5,8 @@
     "commit_report": "../resources/data/commit/",
     "smell_report": "../resources/data/smell/",
     "refactor_report": "../resources/data/refactor/",
-    "designite_java": "../resources/jar/DesigniteJava.jar"
+    "designite_java": "../resources/jar/DesigniteJava.jar",
+    "refactorite_java": "../resources/jar/Refactorite.jar"
   },
   "replace_existing_repo": false,
   "filters": {

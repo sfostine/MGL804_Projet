@@ -5,36 +5,33 @@ import logging
 import os
 import sys
 
-from RepoHelper import RepoHelper
-from SmellHelper import SmellHelper
+from src.main.python.detector.Refactoring import Refactoring
+from src.main.python.RepoHelper import RepoHelper
+from src.main.python.detector.Smell import Smell
 
 
-def run_refactoring_script(cfg: dict, rh: RepoHelper):
-    # TODO: Not Implemented
-    raise NotImplementedError("\n\n\tDoit implementer ce truc: run_refactoring_script")
-
-
-def run_smell_script(cfg: dict, rh: RepoHelper):
-    print('\n\n*** Run Code Smell ***')
-    sh = SmellHelper(cfg)
-    for repo in cfg['repos']:
-        rh.checkout_all_commit(repo, sh.run_detector)
-
-
-async def main():
+def main():
     if is_admin():
+        # LOAD CONFIG
         cfg = json.load(open('../resources/config.json', 'r'))
 
+        # VALIDATE FOLDERS AND FILES
         for name, path in cfg['paths'].items():
             if not os.path.exists(path):
-                os.mkdir(path)
+                if path == cfg['paths']['refactorite_java']:
+                    raise FileNotFoundError(f"{path}\n\t- Must run Maven life-cycle \'clean\' and \'install\' first.")
+                else:
+                    os.mkdir(path)
 
+        # INITIALIZE RepoHelper
         rh = RepoHelper(cfg)
         rh.initialize()
+        rh.add_detectors(Smell(cfg))
+        rh.add_detectors(Refactoring(cfg))
 
-        run_smell_script(cfg, rh)
-        run_refactoring_script(cfg, rh)
-
+        # RUN ALL DETECTOR ON ALL VERSION OF ALL REPOSITORIES
+        for repo in cfg['repos']:
+            rh.checkout_all_commit(repo)
     else:
         # Re-run the program with admin rights
         logging.warning(f'Watch out!\n\t* Re-ran the program with admin rights'
@@ -59,4 +56,4 @@ def is_admin():
         return False
 
 
-asyncio.run(main())
+main()

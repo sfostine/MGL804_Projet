@@ -5,6 +5,8 @@ import shutil
 import pandas as pd
 from pydriller import RepositoryMining, GitRepository
 
+from src.main.python.detector.DetectorStrategy import DetectorStrategy
+
 
 class RepoHelper:
     """https://pydriller.readthedocs.io/en/latest/
@@ -13,11 +15,8 @@ class RepoHelper:
     repo_exist_msg = "Repo \"{}\" already exist.\n\t- to clone remote set \"replace_existing\" = true in \"config.json\""
 
     def __init__(self, cfg: dict):
-        """
-        According to configuration, will clone for each project its repository and output csv files listing all commits.
-        :param config:
-        """
         self.cfg = cfg
+        self.detectors = list()
 
     def initialize(self):
         """
@@ -84,19 +83,17 @@ class RepoHelper:
                     )
                 data.to_csv(self.cfg['paths']['commit_report'] + repo['commit_file'], index=False)
 
-    def checkout_all_commit(self, repo: dict, callback: callable):
-        """
-        :param repo: repo to iterate over (from config.json)
-        :param callback: will be called after each checkout.
-        :return:
-        """
+    def add_detectors(self, detector: DetectorStrategy):
+        self.detectors.append(detector)
 
-        gr = GitRepository(path=self.cfg['paths']['repo'] + repo['name'])
+    def checkout_all_commit(self, repo_cfg: dict):
 
-        commit = pd.read_csv(self.cfg['paths']['commit_report'] + repo['commit_file'], index_col=1)
-        commit.sort_values(ascending=True, inplace=True, by=['author_date'])
+        gr = GitRepository(path=self.cfg['paths']['repo'] + repo_cfg['name'])
 
-        for c in commit['hash'].tolist():
-            gr.checkout(c)
-            callback(repo, c)
+        df = pd.read_csv(self.cfg['paths']['commit_report'] + repo_cfg['commit_file'], index_col=1)
+        df.sort_values(ascending=True, inplace=True, by=['author_date'])
 
+        for commit in df['hash'].tolist():
+            gr.checkout(commit)
+            for detector in self.detectors:
+                detector.run_on(repo_cfg, commit)
