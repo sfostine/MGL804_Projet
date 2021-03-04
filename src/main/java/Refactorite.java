@@ -3,7 +3,7 @@ import java.io.IOException;
 import java.util.List;
 
 import org.eclipse.jgit.lib.Repository;
-import org.json.JSONObject;
+import org.json.simple.JSONObject;
 import org.refactoringminer.api.GitHistoryRefactoringMiner;
 import org.refactoringminer.api.GitService;
 import org.refactoringminer.api.Refactoring;
@@ -14,7 +14,7 @@ import org.refactoringminer.util.GitServiceImpl;
 public class Refactorite {
     public static void main(String[] args) throws Exception {
         // LOAD CONFIGURATION
-        org.json.simple.JSONObject cfg = new Configuration();
+        JSONObject cfg = new Configuration();
         System.out.println(cfg.get("paths"));
 
         // ARGUMENTS OPTION HANDLING
@@ -43,7 +43,7 @@ public class Refactorite {
 
                 for (Refactoring ref : refactorings) {
                     System.out.println("Appending value " + ref.toJSON());
-                    jsonObject.append(commitId, ref.toJSON());
+                    jsonObject.put(commitId, ref.toJSON());
                 }
             }
 
@@ -66,7 +66,7 @@ public class Refactorite {
     private static void WriteToFile(String outputFileName, JSONObject jsonObject) throws IOException {
         FileWriter file = new FileWriter(outputFileName);
         try {
-            file.write(jsonObject.toString(3));
+            file.write(jsonObject.toJSONString());
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
