@@ -90,7 +90,7 @@ class RepoHelper:
 
         gr = GitRepository(path=self.cfg['paths']['repo'] + repo_cfg['name'])
 
-        df = pd.read_csv(self.cfg['paths']['commit_report'] + repo_cfg['commit_file'], index_col=1)
+        df = pd.read_csv(self.cfg['paths']['commit_report'] + repo_cfg['commit_file'], header=0)
         df.sort_values(ascending=True, inplace=True, by=['author_date'])
 
         for commit in df['hash'].tolist():
