@@ -12,10 +12,10 @@ public class ArgumentHandler {
 
     public ArgumentHandler(String[] args) {
         //      todo: debug args bellow
-        String[] testArgs =
-                {"-i", "C:/workspace/MGL804_Projet/src/main/java", "-o", "asdfadsffaf"};
-        args = testArgs.clone();
-        System.out.println(args[0]);
+//        String[] testArgs =
+//                {"-i", "C:/workspace/MGL804_Projet/src/main/java", "-o", "asdfadsffaf"};
+//        args = testArgs.clone();
+//        System.out.println(args[0]);
 
         CommandLine commandLine = null;
         CommandLineParser parser = new DefaultParser();
@@ -54,8 +54,8 @@ public class ArgumentHandler {
             System.exit(2);
         }
 
-        this.inputFolderPath = commandLine.getOptionValue(option_i.getOpt());
-        this.outputFolderPath = commandLine.getOptionValue(option_o.getOpt());
+        this.inputFolderPath = commandLine.getArgs()[0];
+        this.outputFolderPath = commandLine.getArgs()[1];
 
         try {
             validateArgs(inputFolderPath, outputFolderPath);
