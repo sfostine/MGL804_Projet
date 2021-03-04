@@ -7,8 +7,9 @@ import java.io.File;
  */
 public class ArgumentHandler {
 
-    private String inputFolderPath;
-    private String outputFolderPath;
+    private final String inputFolderPath;
+    private final String outputFolderPath;
+    private final String commit;
 
     public ArgumentHandler(String[] args) {
         //      todo: debug args bellow
@@ -34,9 +35,16 @@ public class ArgumentHandler {
                 .longOpt("Output")
                 .argName("Output")
                 .build();
+        Option option_c = Option.builder("c")
+                .required(true)
+                .desc("The SHA key that identifies the commit.")
+                .longOpt("Commit")
+                .argName("Commit")
+                .build();
 
         options.addOption(option_i);
         options.addOption(option_o);
+        options.addOption(option_c);
 
         try {
             commandLine = parser.parse(options, args);
@@ -56,6 +64,7 @@ public class ArgumentHandler {
 
         this.inputFolderPath = commandLine.getArgs()[0];
         this.outputFolderPath = commandLine.getArgs()[1];
+        this.commit = commandLine.getArgs()[2];
 
         try {
             validateArgs(inputFolderPath, outputFolderPath);
@@ -91,5 +100,7 @@ public class ArgumentHandler {
         return inputFolderPath;
     }
 
-
+    public String getCommit() {
+        return commit;
+    }
 }

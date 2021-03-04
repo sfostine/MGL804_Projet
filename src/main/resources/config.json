@@ -6,7 +6,7 @@
     "smell_report": "../resources/data/smell/",
     "refactor_report": "../resources/data/refactor/",
     "designite_java": "../resources/jar/DesigniteJava.jar",
-    "refactorite_java": "../resources/jar/Refactorite.jar"
+    "refactorite_java": "../../../target/Refactorite-jar-with-dependencies.jar"
   },
   "replace_existing_repo": false,
   "filters": {

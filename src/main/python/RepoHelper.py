@@ -95,5 +95,6 @@ class RepoHelper:
 
         for commit in df['hash'].tolist():
             gr.checkout(commit)
+            repo_cfg['commit'] = commit
             for detector in self.detectors:
-                detector.run_on(repo_cfg, commit)
+                detector.run_on(repo_cfg)

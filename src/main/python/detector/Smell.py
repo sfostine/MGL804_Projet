@@ -1,9 +1,10 @@
 import os
-
 import shutil
-# import pandas as pd
 
 from src.main.python.detector.DetectorStrategy import DetectorStrategy
+
+
+# import pandas as pd
 
 
 class Smell(DetectorStrategy):
@@ -16,7 +17,6 @@ class Smell(DetectorStrategy):
         self.temp_path = os.path.abspath(self.cfg['paths']['smell_report'] + '/temp')
         self.current_path = ""
 
-
     def _execute_jar(self, repo_cfg: dict):
         print('\n\n*** Run Code Smell Detector ***')
         if os.path.exists(self.temp_path):
@@ -27,20 +27,19 @@ class Smell(DetectorStrategy):
         # execute .jar
         os.system("java -jar " + self.jar_path + " -i " + repo_path + " -o " + self.temp_path)
 
-    def _format_data(self, repo_cfg: dict, commit_hash: str):
+    def _format_data(self, repo_cfg: dict):
         print('\n\n*** Formatting Code Smell Data ***')
-        print(f"Commit: {commit_hash}")
+        print(f"Commit: {repo_cfg['commit']}")
 
         self.id += 1
 
         for file in os.listdir(self.temp_path):
             if file.endswith(".csv"):
                 old_path = self.temp_path + '\\' + file
-                new_path = self.current_path+f'\\{str(self.id).zfill(6)}_' + file
+                new_path = self.current_path + f'\\{str(self.id).zfill(6)}_' + file
                 if not os.path.exists(self.current_path):
                     os.mkdir(self.current_path)
                 os.rename(old_path, new_path)
-                print(f"{old_path}\n{new_path}\n\n")
 
         #         new_file.set_index('commit_hash', inplace=True)
         #         if not os.path.exists(out_path):

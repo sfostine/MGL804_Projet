@@ -1,9 +1,4 @@
-import java.io.FileWriter;
-import java.io.IOException;
-import java.util.List;
-
 import org.eclipse.jgit.lib.Repository;
-import org.json.simple.JSONObject;
 import org.refactoringminer.api.GitHistoryRefactoringMiner;
 import org.refactoringminer.api.GitService;
 import org.refactoringminer.api.Refactoring;
@@ -11,19 +6,58 @@ import org.refactoringminer.api.RefactoringHandler;
 import org.refactoringminer.rm1.GitHistoryRefactoringMinerImpl;
 import org.refactoringminer.util.GitServiceImpl;
 
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.List;
+
+/**
+ * https://github.com/tsantalis/RefactoringMiner
+ */
 public class Refactorite {
     public static void main(String[] args) throws Exception {
-        // LOAD CONFIGURATION
-        JSONObject cfg = new Configuration();
+        // LOAD CONFIGURATION todo: remove cfg if not needed
+        // JSONObject cfg = new Configuration();
 
         // ARGUMENTS OPTION HANDLING
         ArgumentHandler arg = new ArgumentHandler(args);
         String inputFolderPath = arg.getInputFolderPath();
         String outputFolderPath = arg.getOutputFolderPath();
+        String commit = arg.getCommit();
 
         // RUN PROGRAM
+        detectRefactoringAtCommit(commit, inputFolderPath, outputFolderPath);
         //  DetectRefactoringInSystem("tmp/xerces", "https://github.com/apache/xerces2-j.git", "trunk", "tmp/JsonOutput/xerces.json");
     }
+
+    private static void detectRefactoringAtCommit(String commit, String inputFolderPath, String outputFolderPath) {
+        GitService gitService = new GitServiceImpl();
+        GitHistoryRefactoringMiner miner = new GitHistoryRefactoringMinerImpl();
+
+        try {
+            Repository repo = gitService.openRepository(inputFolderPath);
+            miner.detectAtCommit(repo, commit, new RefactoringHandler() {
+                @Override
+                public void handle(String commitId, List<Refactoring> refactorings) {
+                    System.out.println("Refactorings at " + commitId);
+                    for (Refactoring ref : refactorings) {
+                        // System.out.println(ref.toJSON());
+                        //Write JSON file
+                        try (FileWriter file = new FileWriter(outputFolderPath + "\\report_" + commit + ".json")) {
+                            //We can write any JSONArray or JSONObject instance to the file
+                            file.write(ref.toJSON());
+                            file.flush();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+            });
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
 
 //    private static void DetectRefactoringInSystem(String cloningFolder, String gitPath, String branch, String outputFileName) throws Exception {
 //        GitService gitService = new GitServiceImpl();
