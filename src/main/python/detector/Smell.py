@@ -1,5 +1,6 @@
 import os
 import shutil
+import subprocess
 
 from src.main.python.detector.DetectorStrategy import DetectorStrategy
 
@@ -25,7 +26,7 @@ class Smell(DetectorStrategy):
         repo_path = os.path.abspath(self.cfg['paths']['repo'] + repo_cfg['name'])
 
         # execute .jar
-        os.system("java -jar " + self.jar_path + " -i " + repo_path + " -o " + self.temp_path)
+        subprocess.call(['java', '-jar', self.jar_path, '-i', repo_path, "-o", self.temp_path])
 
     def _format_data(self, repo_cfg: dict):
         print('\n\n*** Formatting Code Smell Data ***')
@@ -36,7 +37,8 @@ class Smell(DetectorStrategy):
         for file in os.listdir(self.temp_path):
             if file.endswith(".csv"):
                 old_path = self.temp_path + '\\' + file
-                new_path = self.current_path + f'\\{str(self.id).zfill(6)}_' + file
+                new_path = self.current_path + f'\\{str(self.id).zfill(6)}_' + file[:-3] + '_' + repo_cfg[
+                    'commit'] + '.csv'
                 if not os.path.exists(self.current_path):
                     os.mkdir(self.current_path)
                 os.rename(old_path, new_path)
