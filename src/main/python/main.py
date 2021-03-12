@@ -1,37 +1,40 @@
-import asyncio
 import ctypes
 import json
 import logging
 import os
 import sys
 
-from src.main.python.detector.Refactoring import Refactoring
 from src.main.python.RepoHelper import RepoHelper
+from src.main.python.detector.Refactoring import Refactoring
 from src.main.python.detector.Smell import Smell
+
+
+def run_project():
+    # LOAD CONFIG
+    cfg = json.load(open('../resources/config.json', 'r'))
+
+    # VALIDATE FOLDERS AND FILES
+    for name, path in cfg['paths'].items():
+        if not os.path.exists(path):
+            if path == cfg['paths']['refactorite_java']:
+                raise FileNotFoundError(f"{path}\n\t- Must run Maven life-cycle \'clean\' and \'install\' first.")
+            else:
+                os.mkdir(path)
+
+    # INITIALIZE RepoHelper
+    rh = RepoHelper(cfg)
+    rh.initialize()
+    rh.add_detectors(Smell(cfg))
+    rh.add_detectors(Refactoring(cfg))
+
+    # RUN ALL DETECTOR ON ALL VERSION OF ALL REPOSITORIES
+    for repo in cfg['repos']:
+        rh.checkout_all_commit(repo)
 
 
 def main():
     if is_admin():
-        # LOAD CONFIG
-        cfg = json.load(open('../resources/config.json', 'r'))
-
-        # VALIDATE FOLDERS AND FILES
-        for name, path in cfg['paths'].items():
-            if not os.path.exists(path):
-                if path == cfg['paths']['refactorite_java']:
-                    raise FileNotFoundError(f"{path}\n\t- Must run Maven life-cycle \'clean\' and \'install\' first.")
-                else:
-                    os.mkdir(path)
-
-        # INITIALIZE RepoHelper
-        rh = RepoHelper(cfg)
-        rh.initialize()
-        rh.add_detectors(Smell(cfg))
-        rh.add_detectors(Refactoring(cfg))
-
-        # RUN ALL DETECTOR ON ALL VERSION OF ALL REPOSITORIES
-        for repo in cfg['repos']:
-            rh.checkout_all_commit(repo)
+        run_project()
     else:
         # Re-run the program with admin rights
         logging.warning(f'Watch out!\n\t* Re-ran the program with admin rights'
