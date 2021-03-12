@@ -1,4 +1,13 @@
 {
+  "paths_D": {
+    "data": "D:/temp_ide/data/",
+    "repo": "D:/temp_ide/data/repo/",
+    "commit_report": "D:/temp_ide/data/commit/",
+    "smell_report": "D:/temp_ide/data/smell/",
+    "refactor_report": "D:/temp_ide/data/refactor/",
+    "designite_java": "D:/temp_ide/data/jar/DesigniteJava.jar",
+    "refactorite_java": "../../../target/Refactorite-jar-with-dependencies.jar"
+  },
   "paths": {
     "data": "../resources/data/",
     "repo": "../resources/data/repo/",
@@ -10,7 +19,7 @@
   },
   "replace_existing_repo": false,
   "filters": {
-    "since": "2001-01-01",
+    "since": "2020-01-01",
     "date_format": "%Y-%m-%d",
     "file_types": [
       ".java"
