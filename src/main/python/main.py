@@ -23,13 +23,16 @@ def run_project():
 
     # INITIALIZE RepoHelper
     rh = RepoHelper(cfg)
-    rh.initialize()
+    rh.clone_all_repo()
     rh.add_detectors(Smell(cfg))
     rh.add_detectors(Refactoring(cfg))
-
     # RUN ALL DETECTOR ON ALL VERSION OF ALL REPOSITORIES
     for repo in cfg['repos']:
         rh.checkout_all_commit(repo)
+    # RUN DATA CONSOLIDATION
+    # TODO
+    # RUN DATA analysis
+    # TODO
 
 
 def main():

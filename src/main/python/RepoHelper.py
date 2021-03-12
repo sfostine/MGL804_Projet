@@ -18,9 +18,9 @@ class RepoHelper:
         self.cfg = cfg
         self.detectors = list()
 
-    def initialize(self):
+    def clone_all_repo(self):
         """
-        Clone repository and list all commits.
+        Clone repository and list all commits in (resources/data/commit).
         """
         repo_path = self.cfg['paths']['repo']
         since = datetime.datetime.strptime(self.cfg['filters']['since'], self.cfg['filters']['date_format'])
