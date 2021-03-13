@@ -1,3 +1,4 @@
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.eclipse.jgit.lib.Repository;
 import org.refactoringminer.api.GitHistoryRefactoringMiner;
 import org.refactoringminer.api.GitService;
@@ -8,51 +9,76 @@ import org.refactoringminer.util.GitServiceImpl;
 
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * https://github.com/tsantalis/RefactoringMiner
  */
 public class Refactorite {
     public static void main(String[] args) throws Exception {
-        // LOAD CONFIGURATION todo: remove cfg if not needed
-        // JSONObject cfg = new Configuration();
-
         // ARGUMENTS OPTION HANDLING
         ArgumentHandler arg = new ArgumentHandler(args);
         String inputFolderPath = arg.getInputFolderPath();
         String outputFolderPath = arg.getOutputFolderPath();
-        String commit = arg.getCommit();
+        String branch = arg.getCommit();
 
+        System.out.println("Detect Refactoring..."
+                + "\n\tbranch: " + branch
+                + "\n\tinputFolderPath: " + inputFolderPath
+                + "\n\toutputFolderPath: " + outputFolderPath
+        );
         // RUN PROGRAM
-        detectRefactoringAtCommit(commit, inputFolderPath, outputFolderPath);
-        //  DetectRefactoringInSystem("tmp/xerces", "https://github.com/apache/xerces2-j.git", "trunk", "tmp/JsonOutput/xerces.json");
+        detectRefactoring(branch, inputFolderPath, outputFolderPath);
     }
 
-    private static void detectRefactoringAtCommit(String commit, String inputFolderPath, String outputFolderPath) {
+    private static void detectRefactoring(String branch, String inputFolderPath, String outputFolderPath) {
         GitService gitService = new GitServiceImpl();
         GitHistoryRefactoringMiner miner = new GitHistoryRefactoringMinerImpl();
 
         try {
             Repository repo = gitService.openRepository(inputFolderPath);
-            miner.detectAtCommit(repo, commit, new RefactoringHandler() {
+            miner.detectAll(repo, branch, new RefactoringHandler() {
+                private String prevCommitId = "";
+
                 @Override
                 public void handle(String commitId, List<Refactoring> refactorings) {
-                    System.out.println("Refactorings at " + commitId);
+                    System.out.println("\tcommitId: " + commitId);
+                    ArrayList refLst = new ArrayList<Map>();
                     for (Refactoring ref : refactorings) {
-                        // System.out.println(ref.toJSON());
-                        //Write JSON file
-                        try (FileWriter file = new FileWriter(outputFolderPath + "\\report_" + commit + ".json")) {
-                            //We can write any JSONArray or JSONObject instance to the file
-                            file.write(ref.toJSON());
-                            file.flush();
+                        ObjectMapper mapper = new ObjectMapper();
+                        try {
+                            Map<String, String> map = mapper.readValue(ref.toJSON(), Map.class);
+                            refLst.add(map);
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
                     }
+                    if (refLst.size() > 0) {
+                        Map<String, Object> jsonMap = new HashMap<>();
+                        jsonMap.put("commitId", commitId);
+                        jsonMap.put("prevCommitId", prevCommitId);
+                        jsonMap.put("refactorings", refLst);
+                        save_json(jsonMap, outputFolderPath);
+                    }
                 }
-            });
 
+                private void save_json(Map<String, Object> data, String outputFolderPath) {
+                    try {
+                        FileWriter file = new FileWriter(outputFolderPath + '\\' + data.get("commitId") + ".json");
+                        ObjectMapper mapper = new ObjectMapper();
+                        String json = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(data);
+
+                        file.write(json);
+                        file.flush();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+            });
         } catch (Exception e) {
             e.printStackTrace();
         }

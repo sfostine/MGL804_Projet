@@ -35,11 +35,11 @@ public class ArgumentHandler {
                 .longOpt("Output")
                 .argName("Output")
                 .build();
-        Option option_c = Option.builder("c")
+        Option option_c = Option.builder("b")
                 .required(true)
-                .desc("The SHA key that identifies the commit.")
-                .longOpt("Commit")
-                .argName("Commit")
+                .desc("The branch name in GitHub.")
+                .longOpt("Branch")
+                .argName("Branch")
                 .build();
 
         options.addOption(option_i);
