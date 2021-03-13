@@ -2,18 +2,18 @@ import ctypes
 import json
 import logging
 import os
+import subprocess
 import sys
+import threading
 
 from src.main.python.RepoHelper import RepoHelper
+from src.main.python.datacleaner.RefactoringCleaner import RefactoringCleaner
+from src.main.python.datacleaner.SmellCleaner import SmellCleaner
 from src.main.python.detector.Refactoring import Refactoring
 from src.main.python.detector.Smell import Smell
 
 
-def run_project():
-    # LOAD CONFIG
-    cfg = json.load(open('../resources/config.json', 'r'))
-
-    # VALIDATE FOLDERS AND FILES
+def validate_files(cfg):
     for name, path in cfg['paths'].items():
         if not os.path.exists(path):
             if path == cfg['paths']['refactorite_java']:
@@ -21,18 +21,49 @@ def run_project():
             else:
                 os.mkdir(path)
 
+def run_project():
+    # LOAD CONFIG
+    cfg = json.load(open('../resources/config.json', 'r'))
+    validate_files(cfg)
+
     # INITIALIZE RepoHelper
     rh = RepoHelper(cfg)
     rh.clone_all_repo()
-    rh.add_detectors(Smell(cfg))
-    rh.add_detectors(Refactoring(cfg))
-    # RUN ALL DETECTOR ON ALL VERSION OF ALL REPOSITORIES
-    for repo in cfg['repos']:
-        rh.checkout_all_commit(repo)
-    # RUN DATA CONSOLIDATION
-    # TODO
-    # RUN DATA analysis
-    # TODO
+
+    # RUN REFACTORING DETECTOR
+    Refactoring(cfg).run(multi_thread=False)
+    # consolidate output data
+    r_cleaner = RefactoringCleaner(cfg)
+    r_cleaner.generate_data_table()
+    r_cleaner.generate_list_commit()
+
+    # RUN SMELL DETECTOR
+    # todo
+    # consolidate output data
+    #
+    #
+    # # rh.add_detectors(Smell(cfg))
+    # rh.add_detectors()
+    #
+    #
+    # # RUN ALL DETECTOR ON ALL VERSION OF ALL REPOSITORIES
+    # threads = []
+    # # multi_thread =True
+    # for repo in cfg['repos']:
+    #     thread = threading.Thread(target=rh.checkout_all_commit, args=(repo), name=f"detectors_{repo['name']}")
+    #     thread.start()
+    #     threads.append(thread)
+    #     # rh.checkout_all_commit(repo)
+    # # Wait all finished cloning
+    # for t in threads:
+    #     t.join()
+    #
+    # # RUN DATA CONSOLIDATION
+    # # s_cleaner = SmellCleaner()
+    # # s_cleaner.merge_files()
+    # # TODO
+    # # RUN DATA analysis
+    # # TODO
 
 
 def main():

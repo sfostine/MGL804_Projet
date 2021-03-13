@@ -43,6 +43,7 @@ class RepoHelper:
         # Wait all finished cloning
         for t in threads:
             t.join()
+            print("Done cloning!")
 
     def clone_repo(self, repo_path, since, repo):
         # cloning repository from remote

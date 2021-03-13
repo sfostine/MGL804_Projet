@@ -1,5 +1,5 @@
 {
-  "paths": {
+  "pathccccccccccs": {
     "data": "../resources/data/",
     "repo": "../resources/data/repo/",
     "commit_report": "../resources/data/commit/",
@@ -47,7 +47,15 @@
     "nb_insertions ",
     "modifications"
   ],
-  "paths_massiwen": {
+
+  "refactoring_columns": [
+    "commit",
+    "file",
+    "refactoring",
+    "results"
+  ],
+
+  "paths": {
     "data": "D:/temp_ide/data/",
     "repo": "D:/temp_ide/data/repo/",
     "commit_report": "D:/temp_ide/data/commit/",
