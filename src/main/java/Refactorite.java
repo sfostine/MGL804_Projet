@@ -63,6 +63,7 @@ public class Refactorite {
                         jsonMap.put("refactorings", refLst);
                         save_json(jsonMap, outputFolderPath);
                     }
+                    prevCommitId = commitId;
                 }
 
                 private void save_json(Map<String, Object> data, String outputFolderPath) {
