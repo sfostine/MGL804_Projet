@@ -92,6 +92,11 @@ class RepoHelper:
                     "modifications": str(mdf_detail)
                 }, ignore_index=True
             )
+            try:
+                data.to_csv(self.cfg['paths']['commit_report'] + repo['commit_file'], index=False)
+            except Exception as e:
+                print(e)
+
         data.to_csv(self.cfg['paths']['commit_report'] + repo['commit_file'], index=False)
 
     def add_detectors(self, detector: DetectorStrategy):
