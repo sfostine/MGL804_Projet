@@ -12,8 +12,15 @@ class RefactoringCleaner:
         self.cfg = cfg
 
     def generate_list_commit(self):
-        # TODO: prev + current
-        pass
+        refactor_path = self.cfg['paths']['refactor_report']
+        for repo in self.cfg['repos']:
+            df = pd.DataFrame(columns=['commit', 'previous'])
+            for file in os.listdir(refactor_path + repo['name']):
+                refactor_data = json.load(open(refactor_path + repo['name'] + '/' + file, 'r'))
+                commit = refactor_data['commitId']
+                previous = refactor_data['prevCommitId']
+                df = df.append({"commit": commit, "previous": previous}, ignore_index=True)
+            df.to_csv(self.cfg['paths']['commit_report'] + repo['name'] + "_refactored.csv", index=False)
 
     def generate_data_table(self):
         refactor_path = self.cfg['paths']['refactor_report']
