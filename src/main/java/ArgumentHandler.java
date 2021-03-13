@@ -12,12 +12,6 @@ public class ArgumentHandler {
     private final String commit;
 
     public ArgumentHandler(String[] args) {
-        //      todo: debug args bellow
-//        String[] testArgs =
-//                {"-i", "C:/workspace/MGL804_Projet/src/main/java", "-o", "asdfadsffaf"};
-//        args = testArgs.clone();
-//        System.out.println(args[0]);
-
         CommandLine commandLine = null;
         CommandLineParser parser = new DefaultParser();
         HelpFormatter formatter = new HelpFormatter();
