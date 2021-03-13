@@ -25,7 +25,7 @@ class RefactoringCleaner:
     def generate_data_table(self):
         refactor_path = self.cfg['paths']['refactor_report']
         for repo in self.cfg['repos']:
-            # index will be the firs three columns
+            # index will be the first three columns
             index_col = self.cfg['refactoring_columns'][:3]
             df = pd.DataFrame(index=index_col, columns=self.cfg['refactoring_columns'])
 
