@@ -2,64 +2,44 @@ import os
 import shutil
 import subprocess
 
-from src.main.python.detector.DetectorStrategy import DetectorStrategy
+from src.main.python import RepoHelper
 
-
-# import pandas as pd
-
-
-class Smell(DetectorStrategy):
+m
+class Smell:
 
     def __init__(self, cfg: dict):
-        super(Smell, self).__init__(cfg)
-        self.id = 0
-
+        self.cfg = cfg
+        self.id = None
         self.jar_path = os.path.abspath(self.cfg['paths']['designite_java'])
-        self.temp_path = os.path.abspath(self.cfg['paths']['smell_report'] + '/temp')
-        self.current_path = ""
+        self.out_path = ""
 
-    def _execute_jar(self, repo_cfg: dict):
-        print('\n\n*** Run Code Smell Detector ***')
-        if os.path.exists(self.temp_path):
-            shutil.rmtree(self.temp_path)
-        self.current_path = os.path.abspath(self.cfg['paths']['smell_report'] + repo_cfg['name'])
+    def run(self, repo_helper: RepoHelper):
+        for repo in self.cfg['repos']:
+            self.out_path = os.path.abspath(self.cfg['paths']['smell_report'] + repo['name'] + '\\temp\\')
+            if os.path.exists(self.out_path):
+                shutil.rmtree(self.out_path)
+
+            self.id = 0
+            repo_helper.checkout_refactored_commit(repo_cfg=repo, call_back=self.detect_smell)
+            shutil.rmtree(self.out_path)
+
+    def detect_smell(self, repo_cfg: dict):
+        self.execute_jar(repo_cfg)
+        self.rename_jar_output(repo_cfg)
+
+    def execute_jar(self, repo_cfg: dict):
+        print('*** Run Code Smell Detector ***')
         repo_path = os.path.abspath(self.cfg['paths']['repo'] + repo_cfg['name'])
+        subprocess.call(['java', '-jar', self.jar_path,
+                         '-i', repo_path,
+                         "-o", self.out_path])
 
-        # execute .jar
-        subprocess.call(['java', '-jar', self.jar_path, '-i', repo_path, "-o", self.temp_path])
-
-    def _format_data(self, repo_cfg: dict):
-        print('\n\n*** Formatting Code Smell Data ***')
-        print(f"Commit: {repo_cfg['commit']}")
-
+    def rename_jar_output(self, repo_cfg: dict):
         self.id += 1
 
-        for file in os.listdir(self.temp_path):
-            if file.endswith(".csv"):
-                old_path = self.temp_path + '\\' + file
-                new_path = self.current_path + f'\\{str(self.id).zfill(6)}_' + file[:-3] + '_' + repo_cfg[
-                    'commit'] + '.csv'
-                if not os.path.exists(self.current_path):
-                    os.mkdir(self.current_path)
-                os.rename(old_path, new_path)
+        keep_file = self.cfg['keep_smell']
 
-        #         new_file.set_index('commit_hash', inplace=True)
-        #         if not os.path.exists(out_path):
-        #             os.mkdir(out_path)
-        #         new_file.to_csv(out_file_path, index=False)
-        #
-        #         if os.path.exists(out_file_path):
-        #             old_file = pd.read_csv(out_file_path, header=0)
-        #             old_file.set_index("commit_hash", inplace=True)
-        #
-        #             new_file = old_file.join(new_file,
-        #                                      how='outer',
-        #                                      on='commit_hash',
-        #                                      rsuffix='rsfx_')
-        #             # remove some columns
-        #             # new_file = new_file[new_file.columns.drop(list(new_file.filter(regex='^rsfx_.*$')))]
-        #
-        #         elif not os.path.exists(out_path):
-        #             os.mkdir(out_path)
-        #         new_file.to_csv(out_file_path, index=False)
-        shutil.rmtree(self.temp_path)
+        for file in keep_file:
+            new_out = self.out_path.replace('\\temp', '')
+            new_name = f'\\{str(self.id).zfill(6)}_' + file[:-4] + "_" + repo_cfg['commit'] + '.csv'
+            os.rename(self.out_path + "\\" + file, new_out + new_name)
