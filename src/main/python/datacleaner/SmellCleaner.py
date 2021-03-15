@@ -69,59 +69,60 @@ class SmellCleaner:
 
     def generate_data_table(self):
         for repo in self.cfg['repos']:
-            implementation = pd.read_csv(self.cfg['paths']['data'] + repo['name'] + "_data_2pivot_smell.csv", header=2)
-            implementation.rename(columns={'Code Smell': 'commit', 'Unnamed: 1': 'file'}, inplace=True)
-
+            # load refactoring table template
             df = pd.read_csv(self.cfg['paths']['data'] + repo['name'] + "_data_1ref.csv", header=0)
             after = df[df['results'] == 'after'].copy(True)
             before = df[df['results'] == 'before'].copy(True)
+            delta = df[df['results'] == 'delta'].copy(True)
 
-            after = after.merge(implementation, on=['commit', 'file'], how='left', indicator=True)
-            # print(list(after.columns)[4:-1])
-            # after[4:-1] = after[4:-1].applymap(lambda x: int(x) * -1)
+            # load code smell
+            smell = pd.read_csv(self.cfg['paths']['data'] + repo['name'] + "_data_2pivot_smell.csv", header=2)
+            smell.rename(columns={'Code Smell': 'commit', 'Unnamed: 1': 'file'}, inplace=True)
 
+            # assign after rows
+            after = after.merge(smell, on=['commit', 'file'], how='left', indicator="_merge: data_1ref <- pivot_smell")
+
+            # assign before rows
             commits = pd.read_csv(self.cfg['paths']['commit_report'] + repo['name'] + "_refactored.csv", header=0)
             before = before.merge(commits, on=['commit'], how='outer', indicator=False)
-            before['commit'] = before['previous']
             del before['previous']
-            before = before.merge(implementation, on=['commit', 'file'], how='left', indicator=True)
+            before = before.merge(smell, on=['commit', 'file'], how='left',
+                                  indicator="_merge: data_1ref <- pivot_smell")
 
-            after.drop(columns='_merge', inplace=True)
-            before.drop(columns='_merge',inplace=True)
-
-            c = after.append(before, ignore_index=True, )
-            c = c.fillna(0)
-            for col in list(c.columns)[4:]:
-                c.loc[c['results']=='before',col]=c[col]*-1
-            c.to_csv(self.cfg['paths']['data'] + repo['name'] + "_data_4.csv", index=True)
-
-            pivot = c.groupby(["commit", "file","refactoring", 'results']).sum()
-
-
-            # pivot = pd.pivot_table(c, index=["commit", "file","refactoring"],
-            #                        values= list(c.columns)[4:],
-            #                        aggfunc=['sum'],
-            #                        fill_value=0                                   )
-            # pivot=pivot.unstack(list(c.columns)[4:])
-            print(len(pivot.index))
-            pivot.to_csv(self.cfg['paths']['data'] + repo['name'] + "_data_5.csv", index=True)
-            delta = pd.read_csv(self.cfg['paths']['data'] + repo['name'] + "_data_5.csv", header=1)
-            delta.rename(columns={'Unnamed: 0': 'commit', 'Unnamed: 1': 'file', 'Unnamed: 2':'refactoring'}, inplace=True)
-            delta['results']='delta'
-
-            c = c.append(delta, ignore_index=True)
-            c.to_csv(self.cfg['paths']['data'] + repo['name'] + "_data_6.csv", index=True)
-            return
-
-            # after[4:-1] = after[4:-1].loc[].applymap(lambda x: int(x) * -1)
-
-            # commit	file	refactoring	results
-            # g = c.groupby(['commit','file','refactoring','results']).sum('results')
-            g = c.groupby(['commit','file','refactoring','results'])['results'].cumsum()
-            g.to_csv(self.cfg['paths']['data'] + repo['name'] + "_data_5.csv", index=True)
-
+            # save snapshot to help debug
             after.to_csv(self.cfg['paths']['data'] + repo['name'] + "_data_3after.csv", index=True)
             before.to_csv(self.cfg['paths']['data'] + repo['name'] + "_data_3before.csv", index=True)
+            after.drop(columns='_merge: data_1ref <- pivot_smell', inplace=True)
+            before.drop(columns='_merge: data_1ref <- pivot_smell', inplace=True)
+
+            # prepare to merge all back (before-after-delta)
+            before['id']  = before['id'] = list(range(0, len(before.index) * 3, 3))
+            after['id'] = after['id'] = list(range(1, len(after.index) * 3, 3))
+            delta = before.copy(True)
+            delta['id']= delta['id'] = list(range(2, len(after.index) * 3, 3))
+            delta['results']='delta'
+            # set index
+            before.set_index('id', inplace=True)
+            after.set_index('id', inplace=True)
+            delta.set_index('id',inplace=True)
+            # merge
+            df = before.append([after,delta],ignore_index=False).copy(True)
+
+            # prepare to format row['delta']
+            smell_cols = list(df.columns)[4:]
+            print(f"smell_cols: {smell_cols}")
+
+            for i in range(0,len(df.index)+1):
+                if i%3==0:
+                    delta[smell_cols] = after[smell_cols]-before[smell_cols]
+
+
+
+
+
+
+            df.sort_values(by='id',inplace=True)
+            df.to_csv(self.cfg['paths']['data'] + repo['name'] + "_data_4.csv", index=True)
 
     # def group_by(self):
     #     implementation = pd.read_csv(self.cfg['paths']['data'] + repo['name'] + "_data_2pivot_smell.csv", header=2)
