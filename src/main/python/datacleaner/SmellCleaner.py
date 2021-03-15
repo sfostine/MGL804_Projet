@@ -40,24 +40,27 @@ class SmellCleaner:
                 else:
                     raise NotImplemented(f"File {cs_type} is not implemented")
 
-            print(self.cfg['paths']['data'] + repo['name'] + "_data_s.csv")
+            implementation.rename(columns={"Type Name": "file"}, inplace=True)
+            implementation = implementation[~implementation['file'].isna()]
             implementation.to_csv(self.cfg['paths']['smell_report'] + repo['name'] + "/_implementation.csv",
                                   index=False)
+
+            design.rename(columns={"Type Name": "file"}, inplace=True)
+            design = implementation[~design['file'].isna()]
             design.to_csv(self.cfg['paths']['smell_report'] + repo['name'] + "/_design.csv", index=False)
 
-    # def generate_data_table(self):
-    #     refactor_path = self.cfg['paths']['smell_report']
-    #     for repo in self.cfg['repos']:
-    #         # index will be the first three columns
-    #         index_col = self.cfg['refactoring_columns'][:3]
-    #         df = pd.read_csv('.csv', header=0)
-    #
-    #         for file in os.listdir(refactor_path + repo['name']):
-    #             refactor_data = json.load(open(refactor_path + repo['name'] + '/' + file, 'r'))
-    #             new_rows = self.generate_rows(refactor_data)
-    #             df = df.append(new_rows, ignore_index=False)
-    #
-    #         df = df[~df['commit'].isna()]
-    #         df = df.set_index(index_col)
-    #
-    #         df.to_csv(self.cfg['paths']['data'] + repo['name'] + "_data.csv", index=True)
+    def generate_pivot_table(self):
+        for repo in self.cfg['repos']:
+            # df = pd.read_csv(self.cfg['paths']['data']+f"{repo['name']}_data.csv", header=0)
+            implementation = pd.read_csv(self.cfg['paths']['smell_report'] + repo['name'] + "/_implementation.csv",
+                                         header=0)
+            implementation['Code Smell count'] = implementation['Code Smell']
+            pivot = pd.pivot_table(implementation, index=["commit", "file", "Code Smell"],
+                                   # columns=["Code Smell"],
+                                   values=["Code Smell count"],
+                                   aggfunc=['count'],
+                                   fill_value=0
+                                   )
+            pivot = pivot.unstack(level="Code Smell", fill_value=0)
+
+            pivot.to_csv(self.cfg['paths']['data'] + repo['name'] + "_data_pivot_smell.csv", index=True)
