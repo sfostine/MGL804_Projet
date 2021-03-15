@@ -126,7 +126,7 @@ class RepoHelper:
 
         df = pd.read_csv(self.cfg['paths']['commit_report'] + repo_cfg['name'] + "_refactored.csv", header=0)
         commits = df['commit'].tolist()
-        previous = df['commit'].tolist()
+        previous = df['previous'].tolist()
 
         unique_commit = set(commits + previous)
         cpt = 0

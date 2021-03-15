@@ -38,32 +38,12 @@ def run_project():
     r_cleaner.generate_list_commit()
 
     # RUN SMELL DETECTOR
-    # todo
+    Smell(cfg).run(repo_helper=rh)
     # consolidate output data
-    #
-    #
-    # # rh.add_detectors(Smell(cfg))
-    # rh.add_detectors()
-    #
-    #
-    # # RUN ALL DETECTOR ON ALL VERSION OF ALL REPOSITORIES
-    # threads = []
-    # # multi_thread =True
-    # for repo in cfg['repos']:
-    #     thread = threading.Thread(target=rh.checkout_all_commit, args=(repo), name=f"detectors_{repo['name']}")
-    #     thread.start()
-    #     threads.append(thread)
-    #     # rh.checkout_all_commit(repo)
-    # # Wait all finished cloning
-    # for t in threads:
-    #     t.join()
-    #
-    # # RUN DATA CONSOLIDATION
-    # # s_cleaner = SmellCleaner()
-    # # s_cleaner.merge_files()
-    # # TODO
-    # # RUN DATA analysis
-    # # TODO
+    s_cleaner = SmellCleaner(cfg)
+    s_cleaner.merge_files()
+    s_cleaner.generate_pivot_table()
+    s_cleaner.generate_data_table()
 
 
 def main():
