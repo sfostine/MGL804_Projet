@@ -4,7 +4,7 @@ import subprocess
 
 from src.main.python import RepoHelper
 
-m
+
 class Smell:
 
     def __init__(self, cfg: dict):
