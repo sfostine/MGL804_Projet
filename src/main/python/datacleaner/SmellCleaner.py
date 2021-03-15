@@ -1,73 +1,63 @@
 import os
-import shutil
-
-from src.main.python.detector.DetectorStrategy import DetectorStrategy
-
 
 import pandas as pd
 
 
+# remove some columns
+# new_file = new_file[new_file.columns.drop(list(new_file.filter(regex='^rsfx_.*$')))]
 class SmellCleaner:
-    def __init__(self):
-        pass
 
+    def __init__(self, cfg: dict):
+        self.cfg = cfg
 
     def merge_files(self):
-        design_cs = []
-        path ="C:/workspace/MGL804_Projet/src\main/resources/data/smell/ant/"
+        smell_path = self.cfg['paths']['smell_report']
+        for repo in self.cfg['repos']:
+            repo_path = smell_path + repo['name'] + '/'
+            implementation = pd.DataFrame(index=['id_data'],
+                                          columns=['id_data', 'Project Name', 'Package Name', 'Type Name',
+                                                   'Method Name', 'Code Smell'])
+            design = pd.DataFrame(index=['id_data'],
+                                  columns=['id_data', 'Project Name', 'Package Name', 'Type Name', 'Code Smell'])
+            for file in os.listdir(repo_path):
+                if file == 'temp':
+                    break
+                file_id, cs_type, commit = file.split('_')
 
-        for file in os.listdir(path):
-            fid, cs_type, commit = file.split('_')
-            if file.endswith(".csv"):
-                if cs_type=="designCodeSmells.":
-                    print(file)
-                    print(commit)
-                    if len(design_cs) != 0:
-                        new_file = pd.read_csv(path+file, header=0)
-                        new_file['commit'] = commit
-                        new_file['id_data'] = 0
+                current_df = pd.read_csv(repo_path + file, header=0)
+                current_df['commit'] = commit
 
-                        last_id = len(design_cs.index.copy(deep=True))+1
-                        new_last_id = len(new_file.index.copy(deep=True))+last_id
+                if cs_type == 'implementationCodeSmells':
+                    next_id = len(implementation.index) + 1
+                    current_df['id_data'] = range(next_id, next_id + len(current_df.index))
+                    current_df.set_index('id_data', inplace=True)
+                    implementation = implementation.append(current_df, ignore_index=False)
+                elif cs_type == 'designCodeSmells':
+                    next_id = len(design.index) + 1
+                    current_df['id_data'] = range(next_id, next_id + len(current_df.index))
+                    current_df.set_index('id_data', inplace=True)
+                    design = design.append(current_df, ignore_index=False)
+                else:
+                    raise NotImplemented(f"File {cs_type} is not implemented")
 
-                        new_file['id_data'] = range(last_id, new_last_id)
-                        new_file.set_index('id_data', inplace=True)
+            print(self.cfg['paths']['data'] + repo['name'] + "_data_s.csv")
+            implementation.to_csv(self.cfg['paths']['smell_report'] + repo['name'] + "/_implementation.csv",
+                                  index=False)
+            design.to_csv(self.cfg['paths']['smell_report'] + repo['name'] + "/_design.csv", index=False)
 
-                        # new_file.set_index([pd.Index(range(last_id,new_last_id)), 'id_data'])
-                        # new_file.set_index([pd.Index(range(last_id,new_last_id)), new_file.index])
-                        # print(design_cs.index)
-
-                        print(design_cs.index)
-                        print(new_file.index)
-
-
-
-                        frames = [design_cs, new_file]
-                        result = pd.concat(frames)
-                        design_cs=result.copy(True)
-                        #
-                        # design_cs = design_cs.join(new_file,
-                        #                            how='outer',
-                        #                            on='id_data'
-                        #                            )
-
-                        print("\n\n")
-                    else:
-                        design_cs =  pd.read_csv(path+file, header=0)
-                        design_cs['commit'] = commit
-                        design_cs['id_data'] = range(len(design_cs.index))
-                        design_cs.set_index('id_data', inplace=True)
-                        print(design_cs.index)
-
-        design_cs.to_csv('__temp.csv',index=False)
-
-
-        #             # remove some columns
-        #             # new_file = new_file[new_file.columns.drop(list(new_file.filter(regex='^rsfx_.*$')))]
-        #
-        #         elif not os.path.exists(out_path):
-        #             os.mkdir(out_path)
-        #         new_file.to_csv(out_file_path, index=False)
-
-
-SmellCleaner().merge_files()
+    # def generate_data_table(self):
+    #     refactor_path = self.cfg['paths']['smell_report']
+    #     for repo in self.cfg['repos']:
+    #         # index will be the first three columns
+    #         index_col = self.cfg['refactoring_columns'][:3]
+    #         df = pd.read_csv('.csv', header=0)
+    #
+    #         for file in os.listdir(refactor_path + repo['name']):
+    #             refactor_data = json.load(open(refactor_path + repo['name'] + '/' + file, 'r'))
+    #             new_rows = self.generate_rows(refactor_data)
+    #             df = df.append(new_rows, ignore_index=False)
+    #
+    #         df = df[~df['commit'].isna()]
+    #         df = df.set_index(index_col)
+    #
+    #         df.to_csv(self.cfg['paths']['data'] + repo['name'] + "_data.csv", index=True)
