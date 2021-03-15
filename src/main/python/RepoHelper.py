@@ -6,7 +6,8 @@ import threading
 import pandas as pd
 from pydriller import RepositoryMining, GitRepository
 
-from src.main.python.detector.DetectorStrategy import DetectorStrategy
+
+# from src.main.python.detector.DetectorStrategy import DetectorStrategy
 
 
 class RepoHelper:
@@ -36,7 +37,8 @@ class RepoHelper:
                     shutil.rmtree(repo_path + repo['name'])
                 # creat directory
                 os.makedirs(repo_path + repo['name'])
-                thread = threading.Thread(target=self.clone_repo, args=(repo_path,since,repo,),name=f"task_{repo['name']}")
+                thread = threading.Thread(target=self.clone_repo, args=(repo_path, since, repo,),
+                                          name=f"task_{repo['name']}")
                 thread.start()
                 threads.append(thread)
 
@@ -99,8 +101,8 @@ class RepoHelper:
 
         data.to_csv(self.cfg['paths']['commit_report'] + repo['commit_file'], index=False)
 
-    def add_detectors(self, detector: DetectorStrategy):
-        self.detectors.append(detector)
+    # def add_detectors(self, detector: DetectorStrategy):
+    #     self.detectors.append(detector)
 
     def checkout_all_commit(self, repo_cfg: dict):
 
@@ -114,3 +116,24 @@ class RepoHelper:
             repo_cfg['commit'] = commit
             for detector in self.detectors:
                 detector.run_on(repo_cfg)
+
+    def checkout_refactored_commit(self, repo_cfg: dict, call_back: callable):
+        gr = GitRepository(path=self.cfg['paths']['repo'] + repo_cfg['name'])
+        try:
+            gr.reset()
+        except:
+            pass
+
+        df = pd.read_csv(self.cfg['paths']['commit_report'] + repo_cfg['name'] + "_refactored.csv", header=0)
+        commits = df['commit'].tolist()
+        previous = df['commit'].tolist()
+
+        unique_commit = set(commits + previous)
+        cpt = 0
+        cpt_total = len(unique_commit)
+        for commit in unique_commit:
+            cpt += 1
+            print(f"{commit}\t\t\t{repo_cfg['name']}\t{cpt}/{cpt_total}")
+            gr.checkout(commit)
+            repo_cfg['commit'] = commit
+            call_back(repo_cfg)
