@@ -3,6 +3,7 @@ import os
 import shutil
 import threading
 
+import numpy as np
 import pandas as pd
 from pydriller import RepositoryMining, GitRepository
 
@@ -128,7 +129,7 @@ class RepoHelper:
         commits = df['commit'].tolist()
         previous = df['previous'].tolist()
 
-        unique_commit = set(commits + previous)
+        unique_commit = set(commits + previous) - {np.nan}
         cpt = 0
         cpt_total = len(unique_commit)
         for commit in unique_commit:

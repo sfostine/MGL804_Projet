@@ -95,35 +95,45 @@ class SmellCleaner:
             after.drop(columns='_merge: data_1ref <- pivot_smell', inplace=True)
             before.drop(columns='_merge: data_1ref <- pivot_smell', inplace=True)
 
-            # prepare to merge all back (before-after-delta)
-            before['id']  = before['id'] = list(range(0, len(before.index) * 3, 3))
+            delta = self.get_delta(repo, before.copy(True), after.copy(True))
+
+            before['id'] = before['id'] = list(range(0, len(before.index) * 3, 3))
             after['id'] = after['id'] = list(range(1, len(after.index) * 3, 3))
-            delta = before.copy(True)
-            delta['id']= delta['id'] = list(range(2, len(after.index) * 3, 3))
-            delta['results']='delta'
-            # set index
+            delta['id'] = delta['id'] = list(range(2, len(after.index) * 3, 3))
+
             before.set_index('id', inplace=True)
             after.set_index('id', inplace=True)
-            delta.set_index('id',inplace=True)
-            # merge
-            df = before.append([after,delta],ignore_index=False).copy(True)
+            delta.set_index('id', inplace=True)
 
-            # prepare to format row['delta']
-            smell_cols = list(df.columns)[4:]
-            print(f"smell_cols: {smell_cols}")
+            df = before.append([after, delta], ignore_index=False)
+            df.sort_values(by='id', inplace=True)
+            df.to_csv(self.cfg['paths']['data'] + repo['name'] + "_data_9.csv", index=True)
 
-            for i in range(0,len(df.index)+1):
-                if i%3==0:
-                    delta[smell_cols] = after[smell_cols]-before[smell_cols]
+    def get_delta(self, repo: dict, before: pd.DataFrame, after: pd.DataFrame) -> pd.DataFrame:
+        before['id'] = before['id'] = list(range(0, len(before.index) * 2, 2))
+        after['id'] = after['id'] = list(range(1, len(after.index) * 2, 2))
+        before.set_index('id', inplace=True)
+        after.set_index('id', inplace=True)
 
+        # temp dataframe for computation
+        temp = before.append([after], ignore_index=False).copy(True)
+        temp.sort_values(by='id', inplace=True)
+        temp['group_id'] = [i - (i % 2) for i in list(range(len(temp.index)))]
+        temp.fillna(0, inplace=True)
+        temp.to_csv(self.cfg['paths']['data'] + repo['name'] + "_data_4temp.csv", index=True)
 
+        smell_cols = list(temp.columns)[4:-1]
+        print(f"smell_cols: {smell_cols}")
 
+        # compute row delta
+        delta = temp[smell_cols + ['group_id']].groupby(('group_id')).diff(axis=0, periods=1)
+        delta.dropna(subset=['Complex Conditional'], inplace=True)
+        delta.to_csv(self.cfg['paths']['data'] + repo['name'] + "_data_5delta.csv", index=True)
 
+        delta = delta.merge(after[['commit', 'file', 'refactoring']].copy(True),
+                            on='id',
+                            how='left')
 
-
-            df.sort_values(by='id',inplace=True)
-            df.to_csv(self.cfg['paths']['data'] + repo['name'] + "_data_4.csv", index=True)
-
-    # def group_by(self):
-    #     implementation = pd.read_csv(self.cfg['paths']['data'] + repo['name'] + "_data_2pivot_smell.csv", header=2)
-#
+        delta['results'] = 'delta'
+        delta.to_csv(self.cfg['paths']['data'] + repo['name'] + "_data_6delta.csv", index=True)
+        return delta
