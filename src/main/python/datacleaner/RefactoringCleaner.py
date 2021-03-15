@@ -35,9 +35,10 @@ class RefactoringCleaner:
                 df = df.append(new_rows, ignore_index=False)
 
             df = df[~df['commit'].isna()]
-            df = df.set_index(index_col)
+            df = df.set_index(list(df.columns))
 
-            df.to_csv(self.cfg['paths']['data'] + repo['name'] + "_data.csv", index=True)
+            df.drop_duplicates(keep='last', inplace=True)
+            df.to_csv(self.cfg['paths']['data'] + repo['name'] + "_data_1ref.csv", index=True)
 
     def generate_rows(self, refactor_data) -> list:
         rows = []
@@ -52,5 +53,5 @@ class RefactoringCleaner:
             file = file.split('/')[-1].split('.')[0]
             for result in results:
                 new_row = {'commit': commit, 'file': file, 'refactoring': r_type, 'results': result}
-                rows.append(new_row)
+                rows.append(new_row.copy())
         return rows

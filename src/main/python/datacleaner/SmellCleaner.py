@@ -63,4 +63,4 @@ class SmellCleaner:
                                    )
             pivot = pivot.unstack(level="Code Smell", fill_value=0)
 
-            pivot.to_csv(self.cfg['paths']['data'] + repo['name'] + "_data_pivot_smell.csv", index=True)
+            pivot.to_csv(self.cfg['paths']['data'] + repo['name'] + "_data_2pivot_smell.csv", index=True)
