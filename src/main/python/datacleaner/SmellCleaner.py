@@ -126,6 +126,7 @@ class SmellCleaner:
 
             df = before.append([after, delta], ignore_index=False)
             df.sort_values(by='id', inplace=True)
+            df.replace(np.nan, 0, inplace=True)
             df.to_csv(self.cfg['paths']['data'] + repo['name'] + "_data_9.csv", index=True)
 
     def get_delta(self, repo: dict, before: pd.DataFrame, after: pd.DataFrame) -> pd.DataFrame:
