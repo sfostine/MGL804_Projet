@@ -32,6 +32,7 @@ def run_project():
 
     # RUN REFACTORING DETECTOR
     Refactoring(cfg).run(multi_thread=False)
+
     # consolidate output data
     r_cleaner = RefactoringCleaner(cfg)
     r_cleaner.generate_data_table()
@@ -39,6 +40,7 @@ def run_project():
 
     # RUN SMELL DETECTOR
     Smell(cfg).run(repo_helper=rh)
+
     # consolidate output data
     s_cleaner = SmellCleaner(cfg)
     s_cleaner.merge_files()
