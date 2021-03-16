@@ -1,8 +1,10 @@
 src/main/resources/data/repo
 /src/main/resources/data/commit
-/src/main/resources/data/smell
 /src/main/resources/data/refactor
 src/main/resources/jar/Refactorite.jar
+/src/main/resources/data/smell/**/*_design.csv
+/src/main/resources/data/smell/**/*_implementation.csv
+/src/main/resources/data*/**/*temp/**
 
 # Created by https://www.toptal.com/developers/gitignore/api/pycharm+all,intellij+all,maven,eclipse
 # Edit at https://www.toptal.com/developers/gitignore?templates=pycharm+all,intellij+all,maven,eclipse
