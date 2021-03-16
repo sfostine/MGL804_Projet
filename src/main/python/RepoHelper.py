@@ -1,5 +1,6 @@
 import datetime
 import os
+import re
 import shutil
 import threading
 
@@ -128,13 +129,23 @@ class RepoHelper:
         df = pd.read_csv(self.cfg['paths']['commit_report'] + repo_cfg['name'] + "_refactored.csv", header=0)
         commits = df['commit'].tolist()
         previous = df['previous'].tolist()
+        finished_commit = []
+
+        # resume if output exist
+        for file in os.listdir(self.cfg['paths']['smell_report'] + repo_cfg['name']):
+            if re.match(r'\d+\_\w+\_\w+\.csv', file):
+                file_id, cs_type, commit = file.split('_')
+                finished_commit.append(commit.replace('.csv', ''))
 
         unique_commit = set(commits + previous) - {np.nan}
+        unique_commit -= set(finished_commit)
+
         cpt = 0
         cpt_total = len(unique_commit)
         for commit in unique_commit:
             cpt += 1
             print(f"{commit}\t\t\t{repo_cfg['name']}\t{cpt}/{cpt_total}")
             gr.checkout(commit)
+            print('\t checkout -done!')
             repo_cfg['commit'] = commit
             call_back(repo_cfg)
