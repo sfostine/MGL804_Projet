@@ -44,7 +44,8 @@ def run_project():
     # consolidate output data
     s_cleaner = SmellCleaner(cfg)
     s_cleaner.merge_files()
-    s_cleaner.generate_pivot_table()
+    s_cleaner.generate_pivot_table(with_files=True)
+    s_cleaner.generate_pivot_table(with_files=False)
     s_cleaner.generate_data_table()
 
 

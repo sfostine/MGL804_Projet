@@ -1,6 +1,7 @@
 import os
 import re
 
+import numpy as np
 import pandas as pd
 
 
@@ -51,13 +52,19 @@ class SmellCleaner:
             design = design[~design['file'].isna()]
             design.to_csv(self.cfg['paths']['smell_report'] + repo['name'] + "/_design.csv", index=False)
 
-    def generate_pivot_table(self):
+    def generate_pivot_table(self, with_files=True):
         for repo in self.cfg['repos']:
             # df = pd.read_csv(self.cfg['paths']['data']+f"{repo['name']}_data.csv", header=0)
             implementation = pd.read_csv(self.cfg['paths']['smell_report'] + repo['name'] + "/_implementation.csv",
                                          header=0)
             implementation['Code Smell count'] = implementation['Code Smell']
-            pivot = pd.pivot_table(implementation, index=["commit", "file", "Code Smell"],
+
+            if with_files:
+                index = ["commit", "file", "Code Smell"]
+            else:
+                index = ["commit", "Code Smell", ]
+
+            pivot = pd.pivot_table(implementation, index=index,
                                    # columns=["Code Smell"],
                                    values=["Code Smell count"],
                                    aggfunc=['count'],
@@ -65,41 +72,53 @@ class SmellCleaner:
                                    )
             pivot = pivot.unstack(level="Code Smell", fill_value=0)
 
-            pivot.to_csv(self.cfg['paths']['data'] + repo['name'] + "_data_2pivot_smell.csv", index=True)
+            if (with_files):
+                suffix = "_data_2pivot_smell_wf.csv"
+            else:
+                suffix = "_data_2pivot_smell.csv"
+
+            pivot.to_csv(self.cfg['paths']['data'] + repo['name'] + suffix, index=True)
 
     def generate_data_table(self):
         for repo in self.cfg['repos']:
+            # load commits to reference previous ones
+            commits = pd.read_csv(self.cfg['paths']['commit_report'] + repo['name'] + "_refactored.csv", header=0)
+
             # load refactoring table template
             df = pd.read_csv(self.cfg['paths']['data'] + repo['name'] + "_data_1ref.csv", header=0)
             after = df[df['results'] == 'after'].copy(True)
             before = df[df['results'] == 'before'].copy(True)
-            delta = df[df['results'] == 'delta'].copy(True)
 
             # load code smell
-            smell = pd.read_csv(self.cfg['paths']['data'] + repo['name'] + "_data_2pivot_smell.csv", header=2)
+            smell = pd.read_csv(self.cfg['paths']['data'] + repo['name'] + "_data_2pivot_smell_wf.csv", header=2)
             smell.rename(columns={'Code Smell': 'commit', 'Unnamed: 1': 'file'}, inplace=True)
 
             # assign after rows
-            after = after.merge(smell, on=['commit', 'file'], how='left', indicator="_merge: data_1ref <- pivot_smell")
+            # todo only on commit if simple?
+            after = after.merge(smell.copy(True), on=['commit', 'file'], how='left',
+                                indicator="data_1ref <- pivot_smell")
 
             # assign before rows
-            commits = pd.read_csv(self.cfg['paths']['commit_report'] + repo['name'] + "_refactored.csv", header=0)
-            before = before.merge(commits, on=['commit'], how='outer', indicator=False)
-            del before['previous']
-            before = before.merge(smell, on=['commit', 'file'], how='left',
-                                  indicator="_merge: data_1ref <- pivot_smell")
+            before = before.merge(commits, on=['commit'], how='left', indicator=False)
+            before.rename(columns={'commit': 'commit_temp'}, inplace=True)
+            before.rename(columns={'previous': 'commit'}, inplace=True)
+            before = before.merge(smell, on=['commit', 'file'], how='left', indicator="data_1ref <- pivot_smell")
+            before['commit'] = before['commit_temp']
+            del before['commit_temp']
 
             # save snapshot to help debug
             after.to_csv(self.cfg['paths']['data'] + repo['name'] + "_data_3after.csv", index=True)
             before.to_csv(self.cfg['paths']['data'] + repo['name'] + "_data_3before.csv", index=True)
-            after.drop(columns='_merge: data_1ref <- pivot_smell', inplace=True)
-            before.drop(columns='_merge: data_1ref <- pivot_smell', inplace=True)
 
             delta = self.get_delta(repo, before.copy(True), after.copy(True))
 
+            print(len(after.index))
+            print(len(before.index))
+            print(len(delta.index))
+
             before['id'] = before['id'] = list(range(0, len(before.index) * 3, 3))
             after['id'] = after['id'] = list(range(1, len(after.index) * 3, 3))
-            delta['id'] = delta['id'] = list(range(2, len(after.index) * 3, 3))
+            delta['id'] = delta['id'] = list(range(2, len(delta.index) * 3, 3))
 
             before.set_index('id', inplace=True)
             after.set_index('id', inplace=True)
@@ -115,14 +134,17 @@ class SmellCleaner:
         before.set_index('id', inplace=True)
         after.set_index('id', inplace=True)
 
+        if len(after.index) != len(before.index):
+            raise Exception("dataframe (after) and (before) should be the same length!")
+
         # temp dataframe for computation
         temp = before.append([after], ignore_index=False).copy(True)
         temp.sort_values(by='id', inplace=True)
         temp['group_id'] = [i - (i % 2) for i in list(range(len(temp.index)))]
-        temp.fillna(0, inplace=True)
+        temp.replace(np.nan, 0, inplace=True)
         temp.to_csv(self.cfg['paths']['data'] + repo['name'] + "_data_4temp.csv", index=True)
 
-        smell_cols = list(temp.columns)[4:-1]
+        smell_cols = list(temp.columns)[4:-2]
         print(f"smell_cols: {smell_cols}")
 
         # compute row delta
